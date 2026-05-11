@@ -1,0 +1,419 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  .argo-masthead {
+    background: #fff; border-bottom: 2px solid #C8102E;
+    padding: 14px 20px 10px; display: flex; align-items: baseline;
+    justify-content: space-between;
+  }
+  .argo-logo { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 0.04em; color: #1A1A1A; text-transform: uppercase; }
+  .argo-logo span { color: #C8102E; }
+  .argo-meta { font-family: 'Barlow Condensed', 'Arial Narrow', sans-serif; font-size: 10px; letter-spacing: 0.12em; color: #6B6B68; text-align: right; text-transform: uppercase; line-height: 1.5; }
+
+  #app {
+    display: flex; flex-direction: column; height: 560px;
+    border-left: 0.5px solid #DCDCD8; border-right: 0.5px solid #DCDCD8;
+    background: #F2F2F0; font-family: 'Barlow', sans-serif; overflow: hidden;
+  }
+
+  #tabbar { display: flex; align-items: flex-end; background: #fff; border-bottom: 1px solid #ccc; flex-shrink: 0; }
+  .tab { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #aaa; padding: 10px 18px 9px; cursor: pointer; border-bottom: 2px solid transparent; transition: color 0.12s; user-select: none; }
+  .tab:hover { color: #555; }
+  .tab.active { color: #1a1a1a; border-bottom: 2px solid #C8102E; }
+
+  #body { display: flex; flex: 1; overflow: hidden; }
+
+  #leaderboard { width: 210px; min-width: 210px; display: flex; flex-direction: column; border-right: 1px solid #ccc; background: #ebebeb; overflow: hidden; }
+  #lb-header { display: flex; justify-content: space-between; align-items: center; padding: 9px 14px; border-bottom: 1px solid #ccc; background: #fff; flex-shrink: 0; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: #777; text-transform: uppercase; }
+  #lb-hint { padding: 6px 14px 4px; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; color: #bbb; text-transform: uppercase; flex-shrink: 0; display: none; }
+  #list { overflow-y: auto; flex: 1; }
+
+  .county-row { display: flex; align-items: center; gap: 8px; padding: 7px 14px; cursor: pointer; border-bottom: 1px solid #d8d8d8; transition: background 0.1s; user-select: none; }
+  .county-row:hover { background: #e0e0de; }
+  .county-row.active { background: #fff; border-left: 3px solid #C8102E; padding-left: 11px; }
+  .county-row.dragging { opacity: 0.4; }
+  .county-row[draggable="true"] { cursor: grab; }
+  .rank { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; color: #aaa; min-width: 20px; }
+  .rank.top3 { color: #C8102E; }
+  .county-name { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.05em; color: #1a1a1a; flex: 1; text-transform: uppercase; }
+  .score-col { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .score-bar-bg { width: 36px; height: 3px; background: #ccc; border-radius: 1px; }
+  .score-bar-fill { height: 3px; background: #C8102E; border-radius: 1px; }
+  .score-val { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 600; color: #888; }
+
+  #detail { flex: 1; display: flex; flex-direction: column; background: #fff; min-width: 0; overflow: hidden; }
+  #radar-view { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #detail-header { padding: 12px 18px 10px; border-bottom: 1px solid #e0e0e0; flex-shrink: 0; display: none; }
+  #detail-name { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 800; letter-spacing: 0.06em; color: #1a1a1a; text-transform: uppercase; line-height: 1; }
+  #detail-score { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.09em; color: #888; text-transform: uppercase; margin-top: 4px; }
+  #detail-score span { color: #C8102E; }
+  .legend-row { display: flex; gap: 10px; align-items: center; margin-top: 4px; }
+  .leg-item { display: flex; align-items: center; gap: 4px; font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: #888; }
+  .leg-sw { width: 8px; height: 8px; border-radius: 50%; }
+
+  #radar-wrap { flex: 1; display: none; align-items: center; justify-content: center; padding: 8px 12px 12px; overflow: hidden; }
+  #radar-sizer { width: 100%; max-width: 100%; aspect-ratio: 1/1; max-height: 100%; position: relative; }
+  #radarChart { position: absolute; top:0; left:0; width:100% !important; height:100% !important; }
+  #empty-radar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+  .es-label { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #ccc; }
+
+  #parcom-view { flex: 1; display: none; flex-direction: column; overflow: hidden; }
+  #drop-zones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 16px 10px; border-bottom: 1px solid #e0e0e0; flex-shrink: 0; }
+  .drop-zone { border: 1.5px dashed #ddd; border-radius: 3px; padding: 8px 12px; min-height: 52px; display: flex; flex-direction: column; justify-content: center; transition: border-color 0.15s, background 0.15s; }
+  .drop-zone.drag-over { border-color: #C8102E; background: rgba(200,16,46,0.04); }
+  .drop-zone.filled { border-style: solid; border-color: #ccc; }
+  .dz-role { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #bbb; margin-bottom: 2px; }
+  .dz-name { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; line-height: 1.1; }
+  .dz-empty { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: #ccc; }
+  .dz-clear { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #bbb; margin-top: 3px; cursor: pointer; display: inline-block; }
+  .dz-clear:hover { color: #C8102E; }
+
+  #parcom-table-wrap { flex: 1; overflow-y: auto; padding: 0 16px 14px; }
+  .hm-grid { display: grid; grid-template-columns: 152px 1fr 1fr; gap: 0; margin-top: 10px; }
+  .hm-header { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; padding: 0 8px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  .hm-header-sub { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #bbb; }
+  .hm-param { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #555; padding: 4px 10px 4px 0; display: flex; align-items: center; border-top: 1px solid #eee; cursor: default; }
+  .hm-param:hover { color: #1a1a1a; }
+  .hm-cell { padding: 3px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; border-top: 1px solid #eee; }
+  .rating-pill { display: inline-block; font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; padding: 2px 8px; border-radius: 2px; width: 100%; text-align: center; cursor: pointer; transition: filter 0.12s; }
+  .rating-pill:hover { filter: brightness(0.92); }
+  .pill-quote { overflow: hidden; max-height: 0; transition: max-height 0.3s ease, opacity 0.2s ease; opacity: 0; width: 100%; }
+  .pill-quote.open { max-height: 160px; opacity: 1; }
+  .pill-quote-inner { border-top: 0.5px solid #eee; margin-top: 5px; padding-top: 6px; padding-bottom: 4px; }
+  .pill-quote-text { font-family: 'Barlow', sans-serif; font-size: 11px; font-style: italic; color: #6B6B68; line-height: 1.5; margin: 0 0 3px; }
+  .pill-quote-attr { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: #9A9A96; }
+  #parcom-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; }
+
+  #tooltip { position: fixed; z-index: 9999; background: #1a1a1a; color: #f0f0f0; font-family: 'Barlow', sans-serif; font-size: 12px; line-height: 1.5; padding: 8px 12px; border-radius: 3px; max-width: 220px; pointer-events: none; opacity: 0; transition: opacity 0.12s; border-left: 3px solid #C8102E; }
+  .tooltip-title { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; margin-bottom: 4px; }
+  .tooltip-hint { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase; color: #888; margin-top: 5px; }
+
+  .argo-footer { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: #9A9A96; text-align: center; padding: 10px 16px 14px; border-top: 0.5px solid #DCDCD8; background: #F2F2F0; }
+  .argo-footer-bar { height: 3px; background: #C8102E; margin: 0 0 2px; }
+  .argo-footer-bar-thin { height: 1px; background: #C8102E; margin-bottom: 10px; }
+</style>
+
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Argo Navigator county leaderboard with radar and parameter comparison views</h2>
+
+<div id="tooltip"><div class="tooltip-title" id="tt-title"></div><div id="tt-body"></div><div class="tooltip-hint" id="tt-hint"></div></div>
+
+<div class="argo-masthead">
+  <div class="argo-logo">Argo <span>Navigator</span></div>
+  <div class="argo-meta">Florida Panhandle &amp; High-Tech Corridor<br>May 2026</div>
+</div>
+
+<div id="app">
+  <div id="tabbar">
+    <div class="tab active" id="tab-radar" onclick="switchTab('radar')">Radar</div>
+    <div class="tab" id="tab-parcom" onclick="switchTab('parcom')">Par. Comparison</div>
+  </div>
+  <div id="body">
+    <div id="leaderboard">
+      <div id="lb-header"><span>County</span></div>
+      <div id="lb-hint">Drag to compare</div>
+      <div id="list"></div>
+    </div>
+    <div id="detail">
+      <div id="radar-view">
+        <div id="detail-header">
+          <div id="detail-name"></div>
+          <div id="detail-score"></div>
+          <div class="legend-row">
+            <div class="leg-item"><div class="leg-sw" style="background:#E94F00"></div>Less Strong</div>
+            <div class="leg-item"><div class="leg-sw" style="background:#d4a800"></div>Somewhat Strong</div>
+            <div class="leg-item"><div class="leg-sw" style="background:#275f1e"></div>Very Strong</div>
+          </div>
+        </div>
+        <div id="radar-wrap">
+          <div id="radar-sizer">
+            <canvas id="radarChart" role="img" aria-label="Radar chart of 14 parameters rated 1 to 3"></canvas>
+          </div>
+        </div>
+        <div id="empty-radar">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <div class="es-label">Select a county</div>
+        </div>
+      </div>
+      <div id="parcom-view">
+        <div id="drop-zones">
+          <div class="drop-zone" id="dz-a" ondragover="dzOver(event,'a')" ondragleave="dzLeave('a')" ondrop="dzDrop(event,'a')">
+            <div id="dz-a-content"><div class="dz-empty">Drop county here</div></div>
+          </div>
+          <div class="drop-zone" id="dz-b" ondragover="dzOver(event,'b')" ondragleave="dzLeave('b')" ondrop="dzDrop(event,'b')">
+            <div id="dz-b-content"><div class="dz-empty">Drop county here</div></div>
+          </div>
+        </div>
+        <div id="parcom-table-wrap">
+          <div id="parcom-empty"><div class="es-label">Drop two counties above to compare</div></div>
+          <div id="hm-grid-wrap" style="display:none;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="argo-footer">
+  <div class="argo-footer-bar"></div>
+  <div class="argo-footer-bar-thin"></div>
+  DIBI · Argo Navigator · Florida Maritime Investment Analysis · 2026
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const PARAMS = [
+  { label: 'Economy',               blurb: 'How the local economy functions, how it has grown, and how it has evolved over time.',
+    quote: '"The diversification of our employer base over the last decade is what kept us stable when others weren\'t."', attr: 'Regional economic director' },
+  { label: 'Social Capital',        blurb: 'Social networks and community connections — how people organize, support each other, and work together.',
+    quote: '"People here show up for each other. That\'s not something you can manufacture — it has to grow organically."', attr: 'Community foundation director' },
+  { label: 'Public Safety',         blurb: 'Public safety resources and systems — how safety is maintained and what capacity exists in the community.',
+    quote: '"We shifted from response to prevention. That changed everything about how the community relates to law enforcement."', attr: 'County sheriff, 2024' },
+  { label: 'Finance',               blurb: 'Public finances and the broader financial system supporting local businesses and residents.',
+    quote: '"Our credit rating went up three notches in five years. That\'s what disciplined budgeting and transparent accounting gets you."', attr: 'County finance director' },
+  { label: 'Energy',                blurb: 'The local energy system — how it operates, its reliability, and what capacity it can handle.',
+    quote: '"We went from the most outage-prone grid in the region to one of the most reliable. Infrastructure investment is not optional."', attr: 'Utility board chair' },
+  { label: 'Local Governance',      blurb: 'How the community organizes itself across government, businesses, and other institutions to get things done.',
+    quote: '"When city hall, the chamber, and the nonprofits are all working the same plan, things actually get done."', attr: 'City manager, 2023' },
+  { label: 'Arts, Culture & Rec.',  blurb: 'Arts, cultural, and recreational resources — what exists, who uses them, and how they contribute to community life.',
+    quote: '"Businesses started recruiting with our trail system and arts district in their pitch decks. Culture is economic development."', attr: 'Economic development planner' },
+  { label: 'Education',             blurb: 'The education landscape from K–12 through higher education and technical training.',
+    quote: '"We stopped thinking about graduation rates and started thinking about what happens after. That shift made all the difference."', attr: 'School superintendent' },
+  { label: 'Housing',               blurb: 'Housing availability, affordability, and quality across the community.',
+    quote: '"Workforce housing isn\'t a charity project — it\'s how you retain the teachers, nurses, and technicians your economy needs."', attr: 'Housing authority director' },
+  { label: 'Transportation',        blurb: 'The transportation system for both people and goods — infrastructure, access, and reliability.',
+    quote: '"Broadband was the bridge. Once rural families had connection, everything else followed."', attr: 'Economic development planner' },
+  { label: 'Telecommunications',    blurb: 'Internet and phone service availability and performance across the community.',
+    quote: '"We had employers turn us down because they couldn\'t get reliable fiber. That ended when we built our own last-mile network."', attr: 'County IT director' },
+  { label: 'Food Security',         blurb: 'Who has access to adequate food and who struggles — supply, affordability, and distribution.',
+    quote: '"The food desert problem was solved by three things: a community garden network, a mobile market, and political will."', attr: 'Food bank executive director' },
+  { label: 'Public Health',         blurb: 'Healthcare access and public health services that make the community attractive to workers and employers.',
+    quote: '"Our mobile clinic program changed everything. We reached households that hadn\'t seen a provider in over a decade."', attr: 'Public health officer' },
+  { label: 'Workforce',             blurb: 'Who is available to work, what skills exist, and how the local job market functions.',
+    quote: '"We built the pipeline ourselves — community college, apprenticeships, and employer partnerships. Nobody was going to do it for us."', attr: 'Workforce development director' },
+];
+
+const RATING_COLOR = { 1:'#E94F00', 2:'#d4a800', 3:'#275f1e' };
+const RATING_BG    = { 1:'rgba(207,57,0,0.14)', 2:'rgba(255,200,0,0.17)', 3:'rgba(74,163,60,0.13)' };
+const RATING_LABEL = { 1:'Less Strong', 2:'Somewhat Strong', 3:'Very Strong' };
+const COL_A = '#185FA5', COL_B = '#C8102E';
+
+function rndRating() { return Math.ceil(Math.random() * 3); }
+
+const COUNTY_NAMES = [
+  'Adams','Baker','Carroll','Dixon','Ellis','Floyd','Grant','Hayes','Irwin','Jackson',
+  'Kent','Logan','Mason','Norton','Owens','Perry','Quinn','Reed','Stone','Turner',
+  'Union','Vance','Warren','Xavier','York','Zane','Alcott','Benton','Cedar','Denton',
+  'Easton','Fulton','Galton','Harper','Irving','Jasper','Kenton','Lennox','Mercer','Nelson'
+];
+
+const counties = COUNTY_NAMES.map(name => {
+  const params = PARAMS.map(() => rndRating());
+  const avg = parseFloat((params.reduce((a,b)=>a+b,0)/params.length).toFixed(2));
+  return { name, params, avg };
+}).sort((a,b) => b.avg - a.avg);
+
+const maxAvg = counties[0].avg;
+let radarChart = null, activeRadarIdx = null, currentTab = 'radar';
+let parcomA = null, parcomB = null, dragIdx = null;
+
+function dotColor(avg) { return avg >= 2.34 ? '#275f1e' : avg >= 1.67 ? '#d4a800' : '#E94F00'; }
+
+const tt = document.getElementById('tooltip');
+const ttTitle = document.getElementById('tt-title');
+const ttBody = document.getElementById('tt-body');
+
+const ttHint = document.getElementById('tt-hint');
+
+function showTooltip(e, param, isPill=false) {
+  ttTitle.textContent = param.label;
+  ttBody.textContent = param.blurb;
+  ttHint.textContent = isPill ? 'Click to read quote' : '';
+  tt.style.opacity = '1';
+  posTooltip(e);
+}
+function posTooltip(e) {
+  const x = e.clientX+14, y = e.clientY-10, tw = 220, th = tt.offsetHeight;
+  tt.style.left = (x+tw > window.innerWidth ? e.clientX-tw-10 : x)+'px';
+  tt.style.top  = (y+th > window.innerHeight ? e.clientY-th-10 : y)+'px';
+}
+function hideTooltip() { tt.style.opacity = '0'; }
+document.addEventListener('mousemove', e => { if (tt.style.opacity==='1') posTooltip(e); });
+
+function renderList() {
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  counties.forEach((c, i) => {
+    const row = document.createElement('div');
+    row.className = 'county-row' + (currentTab==='radar' && activeRadarIdx===i ? ' active' : '');
+    row.draggable = currentTab === 'parcom';
+    row.innerHTML = `
+      <span class="county-name">${c.name}</span>`;
+    row.addEventListener('click', () => {
+      if (currentTab==='radar') { selectCounty(i); return; }
+      if (parcomA === null || parcomB === null) {
+        if (parcomA === null) parcomA = i;
+        else parcomB = i;
+        updateDropZones(); renderParcom();
+      }
+    });
+    row.addEventListener('dblclick', () => {
+      if (currentTab==='radar') return;
+      if (parcomA !== null && parcomB !== null) {
+        parcomA = parcomB; parcomB = i;
+        updateDropZones(); renderParcom();
+      }
+    });
+    row.addEventListener('dragstart', e => { dragIdx=i; row.classList.add('dragging'); e.dataTransfer.effectAllowed='copy'; });
+    row.addEventListener('dragend', () => row.classList.remove('dragging'));
+    list.appendChild(row);
+  });
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tab-radar').classList.toggle('active', tab==='radar');
+  document.getElementById('tab-parcom').classList.toggle('active', tab==='parcom');
+  document.getElementById('radar-view').style.display = tab==='radar' ? 'flex' : 'none';
+  document.getElementById('parcom-view').style.display = tab==='parcom' ? 'flex' : 'none';
+  document.getElementById('lb-hint').style.display = tab==='parcom' ? 'block' : 'none';
+  if (tab==='parcom') { updateDropZones(); renderParcom(); }
+  renderList();
+}
+
+function selectCounty(i) {
+  activeRadarIdx = i; renderList();
+  const c = counties[i];
+  document.getElementById('detail-header').style.display = 'block';
+  document.getElementById('detail-name').textContent = c.name + ' County';
+  const rLabel = c.avg>=2.34?'Very Strong':c.avg>=1.67?'Somewhat Strong':'Less Strong';
+  const col = dotColor(c.avg);
+  document.getElementById('detail-score').innerHTML =
+    `<span style="color:${col}">${rLabel}</span>`;
+  document.getElementById('empty-radar').style.display = 'none';
+  document.getElementById('radar-wrap').style.display = 'flex';
+  if (radarChart) radarChart.destroy();
+  radarChart = new Chart(document.getElementById('radarChart'), {
+    type:'radar',
+    data:{ labels:PARAMS.map(p=>p.label), datasets:[{
+      label:c.name, data:c.params,
+      backgroundColor:`rgba(${col==='#275f1e'?'74,163,60':col==='#d4a800'?'255,200,0':'233,79,0'},0.08)`,
+      borderColor:col, borderWidth:2,
+      pointBackgroundColor:c.params.map(v=>RATING_COLOR[v]),
+      pointBorderColor:'#fff', pointBorderWidth:1.5, pointRadius:5, pointHoverRadius:7
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false, layout:{padding:10},
+      plugins:{legend:{display:false}, tooltip:{callbacks:{label:ctx=>RATING_LABEL[ctx.raw]||ctx.raw}}},
+      scales:{r:{min:0,max:3,
+        ticks:{stepSize:1,color:'transparent',backdropColor:'transparent',font:{family:"'Barlow Condensed',sans-serif",size:9,weight:'600'},callback:v=>('')},
+        grid:{color:'rgba(0,0,0,0.08)'},angleLines:{color:'rgba(0,0,0,0.08)'},
+        pointLabels:{color:'#555',font:{family:"'Barlow Condensed',sans-serif",size:9,weight:'700'},padding:4}
+      }}
+    }
+  });
+}
+
+function dzOver(e,slot){e.preventDefault();document.getElementById('dz-'+slot).classList.add('drag-over');}
+function dzLeave(slot){document.getElementById('dz-'+slot).classList.remove('drag-over');}
+function dzDrop(e,slot){
+  e.preventDefault();dzLeave(slot);
+  if(dragIdx===null)return;
+  if(slot==='a')parcomA=dragIdx;else parcomB=dragIdx;
+  dragIdx=null; updateDropZones(); renderParcom();
+}
+
+function updateDropZones(){
+  const upd=(slot,idx,col)=>{
+    const dz=document.getElementById('dz-'+slot);
+    const content=document.getElementById('dz-'+slot+'-content');
+    if(idx!==null){
+      dz.classList.add('filled');
+      content.innerHTML=`<div class="dz-name" style="color:#1A1A1A">${counties[idx].name}</div><span class="dz-clear" onclick="clearDZ('${slot}')">Clear &times;</span>`;
+    }else{
+      dz.classList.remove('filled');
+      content.innerHTML=`<div class="dz-empty">Drop county here</div>`;
+    }
+  };
+  upd('a',parcomA,COL_A);upd('b',parcomB,COL_B);
+}
+
+function clearDZ(slot){if(slot==='a')parcomA=null;else parcomB=null;updateDropZones();renderParcom();}
+
+function renderParcom(){
+  const empty=document.getElementById('parcom-empty');
+  const gridWrap=document.getElementById('hm-grid-wrap');
+  if(parcomA===null||parcomB===null){empty.style.display='flex';gridWrap.style.display='none';return;}
+  empty.style.display='none';gridWrap.style.display='block';
+  const cA=counties[parcomA],cB=counties[parcomB];
+  gridWrap.innerHTML='';
+  const grid=document.createElement('div');
+  grid.className='hm-grid';
+  const hEl=(cls,style,html)=>{const el=document.createElement('div');el.className=cls;if(style)el.style.cssText=style;if(html!==undefined)el.innerHTML=html;return el;};
+  const hA=hEl('hm-header','color:#1A1A1A;border-top:none;');
+  hA.innerHTML=`${cA.name}`;
+  const hB=hEl('hm-header','color:#1A1A1A;border-top:none;');
+  hB.innerHTML=`${cB.name}`;
+  grid.append(hEl('hm-param','border-top:none;'),hA,hB);
+  PARAMS.forEach((p,i)=>{
+    const a=cA.params[i],b=cB.params[i];
+    const paramCell=hEl('hm-param','',p.label);
+    paramCell.addEventListener('mouseenter',e=>showTooltip(e,p,true));
+    paramCell.addEventListener('mouseleave',hideTooltip);
+
+    const makePillCell = (rating) => {
+      const cell = hEl('hm-cell','','');
+      const pill = document.createElement('span');
+      pill.className = 'rating-pill';
+      pill.style.cssText = `background:${RATING_BG[rating]};color:${RATING_COLOR[rating]};`;
+      pill.textContent = RATING_LABEL[rating];
+      const quoteDiv = document.createElement('div');
+      quoteDiv.className = 'pill-quote';
+      quoteDiv.innerHTML = `<div class="pill-quote-inner"><p class="pill-quote-text">${p.quote}</p><span class="pill-quote-attr">— ${p.attr}</span></div>`;
+      cell.appendChild(pill);
+      cell.appendChild(quoteDiv);
+      return { cell, pill, quoteDiv };
+    };
+
+    // Blurb under param name
+    const blurbDiv = document.createElement('div');
+    blurbDiv.className = 'pill-quote';
+    blurbDiv.innerHTML = `<div class="pill-quote-inner" style="border-top:none;padding-top:4px;"><p class="pill-quote-text" style="font-style:normal;color:#555;text-transform:none;letter-spacing:0.02em;">${p.blurb}</p></div>`;
+    paramCell.style.cssText += 'flex-direction:column;align-items:flex-start;cursor:pointer;';
+    paramCell.appendChild(blurbDiv);
+
+    const cellA = makePillCell(a);
+    const cellB = makePillCell(b);
+
+    let rowOpen = false;
+    const allCells = [paramCell, cellA.cell, cellB.cell];
+
+    const toggleRow = () => {
+      rowOpen = !rowOpen;
+      blurbDiv.classList.toggle('open', rowOpen);
+      [cellA, cellB].forEach(({pill, quoteDiv}) => {
+        quoteDiv.classList.toggle('open', rowOpen);
+        pill.style.borderRadius = rowOpen ? '2px 2px 0 0' : '2px';
+      });
+    };
+
+    allCells.forEach(el => {
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', () => { hideTooltip(); toggleRow(); });
+    });
+
+    paramCell.addEventListener('mouseenter', e => showTooltip(e, p, true));
+    paramCell.addEventListener('mouseleave', hideTooltip);
+    [cellA, cellB].forEach(({pill}) => {
+      pill.addEventListener('mouseenter', e => { e.stopPropagation(); showTooltip(e, p, true); });
+      pill.addEventListener('mouseleave', hideTooltip);
+    });
+
+    grid.append(paramCell, cellA.cell, cellB.cell);
+  });
+  gridWrap.appendChild(grid);
+}
+
+switchTab('radar');
+renderList();
+</script>
