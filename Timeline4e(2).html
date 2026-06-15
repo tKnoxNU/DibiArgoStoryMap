@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Federal Policy and Investment Timing</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f8f7f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  .card {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 52px 64px 60px;
+    max-width: 1100px;
+    width: 100%;
+    box-shadow: 0 4px 32px rgba(0,0,0,0.07);
+  }
+
+  .heading {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    color: #111;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+
+  .subheading {
+    font-size: 0.95rem;
+    color: #888;
+    font-weight: 400;
+    margin-bottom: 10px;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── Timeline container ── */
+  .timeline-wrap {
+    position: relative;
+    margin-top: 30px;
+    padding: 200px 0 140px; /* extra top space for YAH badge above track */
+  }
+
+  /* ── Track ── */
+  .track {
+    position: relative;
+    height: 4px;
+    background: #ccc;
+    border-radius: 2px;
+  }
+
+  .track::after {
+    content: '';
+    position: absolute;
+    right: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    border-top: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+    border-left: 14px solid #ccc;
+  }
+
+  /* filled up to and including the YOU ARE HERE dot (~63%) */
+  .track-fill {
+    position: absolute;
+    left: 0; top: 0;
+    height: 100%;
+    width: 63%;
+    background: #222;
+    border-radius: 2px;
+  }
+
+  /* ── Milestones sit on the track (top:50%) ── */
+  .milestone {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  /* ── Dot ── */
+  .dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #888;
+    position: relative;
+    z-index: 3;
+  }
+
+  /* past milestone — solid dark dot, muted text */
+  .milestone.past .dot {
+    background: #666;
+  }
+
+  /* future milestone */
+  .milestone.future .dot {
+    background: #fff;
+    border: 2.5px solid #bbb;
+  }
+
+  /* contingent/TBD */
+  .milestone.contingent .dot {
+    background: #fff;
+    border: 2.5px dashed #bbb;
+  }
+
+  /* YOU ARE HERE dot */
+  .milestone.now .dot {
+    width: 22px;
+    height: 22px;
+    background: #c0233a;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 7px rgba(192,35,58,0.15); }
+    50%       { box-shadow: 0 0 0 15px rgba(192,35,58,0.06); }
+  }
+
+  /* ── Stems ── */
+  .stem {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 1.5px;
+    background: #ddd;
+    z-index: 1;
+  }
+  .stem.up   { bottom: 50%; }
+  .stem.down { top: 50%; }
+
+  .milestone.past .stem       { background: #ccc; }
+  .milestone.contingent .stem { background: #e8e8e8; }
+  .milestone.now .stem        { background: rgba(192,35,58,0.4); }
+
+  /* ── Labels ── */
+  .label {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    text-align: center;
+    z-index: 2;
+    width: 112px;
+  }
+  .label.up   { bottom: calc(50% + var(--stem)); }
+  .label.down { top:    calc(50% + var(--stem)); }
+
+  .label-date {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #111;
+    white-space: nowrap;
+  }
+  .label-title {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: #444;
+    margin-top: 2px;
+    line-height: 1.3;
+  }
+  .label-sub {
+    font-size: 0.62rem;
+    color: #999;
+    margin-top: 2px;
+    line-height: 1.3;
+  }
+
+  /* past: slightly greyed */
+  .milestone.past .label-date  { color: #666; }
+  .milestone.past .label-title { color: #777; }
+  .milestone.past .label-sub   { color: #aaa; }
+
+  /* contingent */
+  .milestone.contingent .label-date  { color: #aaa; }
+  .milestone.contingent .label-title { color: #aaa; font-style: italic; }
+  .milestone.contingent .label-sub   { color: #bbb; }
+
+  /* YOU ARE HERE dot label */
+  .milestone.now .label-date  { color: #c0233a; font-size: 0.82rem; }
+  .milestone.now .label-title { color: #c0233a; font-weight: 700; }
+
+  /* ── YOU ARE HERE badge (sits above the now dot) ── */
+  .yah-badge {
+    position: absolute;
+    left: 50%;
+    /* badge sits above the now-dot's up label; stem=76px, label≈48px, gap=10px */
+    /* you are here spacing */
+    bottom: calc(50% + 76px + 45px);
+    transform: translateX(-50%);
+    background: #c0233a;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    padding: 6px 14px;
+    border-radius: 999px;
+    white-space: nowrap;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    animation: floatBadge 3s ease-in-out infinite;
+  }
+
+  .yah-badge::before { content: '←'; font-size: 0.75rem; }
+
+  .yah-badge::after {
+    content: '';
+    position: absolute;
+    top: 100%; left: 50%;
+    transform: translateX(-50%);
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid #c0233a;
+  }
+
+  @keyframes floatBadge {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50%       { transform: translateX(-50%) translateY(-5px); }
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1 class="heading">A Critical Window: Federal Policy and Investment Timing</h1>
+  <p class="subheading">Florida's investment analysis arrives at a pivotal moment in federal economic development policy</p>
+
+  <div class="timeline-wrap">
+    <div class="track">
+      <div class="track-fill"></div>
+
+      <!-- Milestones and YOU ARE HERE dot are positioned by JS below -->
+
+    </div><!-- /track -->
+  </div><!-- /timeline-wrap -->
+</div><!-- /card -->
+
+<script>
+// ── Discrete YOU ARE HERE positioning ───────────────────────────────────────
+// The YAH dot is inserted between whichever two milestone dates bracket today.
+// All dots (including YAH) are then spaced evenly across the track.
+// Spacing never changes — only the slot order does.
+
+// Each fixed milestone: date used only to determine YAH insertion point.
+// class: past | future | contingent
+// dir/tier controls label placement (same alternating pattern as before).
+// The tier pattern D1,U1,D2,U2 repeats; YAH always uses U2 (up tall).
+const MILESTONES = [
+  { date: new Date('2017-12-22'), cls: 'past',        dir: 'down', stem: 36,  dateLabel: 'Dec 22, 2017', title: 'TCJA Signed',                          sub: 'OZ program created' },
+  { date: new Date('2018-07-01'), cls: 'past',        dir: 'up',   stem: 36,  dateLabel: 'July 2018',    title: 'OZ 1.0 Tracts Designated',             sub: '8,764 tracts designated' },
+  { date: new Date('2024-12-01'), cls: 'past',        dir: 'down', stem: 76,  dateLabel: 'Dec 2024',     title: 'SHIPS Act',                            sub: 'Introduced in Congress' },
+  { date: new Date('2025-04-09'), cls: 'past',        dir: 'up',   stem: 76,  dateLabel: 'Apr 9, 2025',  title: 'EO 14269 Signed',                      sub: '"Restoring Maritime Dominance"; MAP ordered' },
+  { date: new Date('2025-07-04'), cls: 'past',        dir: 'down', stem: 36,  dateLabel: 'Jul 4, 2025',  title: 'OBBBA Signed',                         sub: 'OZs made permanent' },
+  { date: new Date('2026-02-13'), cls: 'past',        dir: 'up',   stem: 36,  dateLabel: 'Feb 13, 2026', title: 'Maritime Action Plan (MAP) Published',  sub: '100 MPZs proposed' },
+  { date: new Date('2026-04-01'), cls: 'past',        dir: 'down', stem: 76,  dateLabel: 'Apr 2026',     title: 'IRS OZ 2.0 Tract List Released',        sub: 'Rev. Proc. 2026-14 published' },
+  { date: new Date('2026-07-01'), cls: 'future',      dir: 'down', stem: 36,  dateLabel: 'Jul 1, 2026',  title: 'OZ 2.0 Window Opens',                  sub: 'Nomination period begins' },
+  { date: new Date('2026-08-01'), cls: 'contingent',  dir: 'up',   stem: 76,  dateLabel: 'Aug–Dec 2026', title: 'MPZ Designation',                      sub: 'Contingent on legislation (TBD)' },
+  { date: new Date('2026-09-28'), cls: 'future',      dir: 'down', stem: 76,  dateLabel: 'Sep 28, 2026', title: 'OZ 2.0 Window Closes',                 sub: '90-day deadline' },
+  { date: new Date('2026-12-26'), cls: 'future',      dir: 'up',   stem: 36,  dateLabel: 'Dec 26, 2026', title: 'OZ 2.0 Certified',                     sub: 'Treasury final tract list' },
+  { date: new Date('2027-01-01'), cls: 'future',      dir: 'down', stem: 36,  dateLabel: 'Jan 1, 2027',  title: 'OZ 2.0 Takes Effect',                  sub: 'New map active' },
+];
+
+// Find where today falls among the milestone dates
+const today = new Date();
+today.setHours(0,0,0,0);
+
+// Insert YAH after the last milestone whose date <= today
+let insertAfter = -1; // -1 = before all milestones
+for (let i = 0; i < MILESTONES.length; i++) {
+  if (MILESTONES[i].date <= today) insertAfter = i;
+}
+
+// Build ordered slot list, inserting YAH at the right position
+const slots = [];
+for (let i = 0; i < MILESTONES.length; i++) {
+  slots.push({ type: 'milestone', data: MILESTONES[i] });
+  if (i === insertAfter) slots.push({ type: 'now' });
+}
+// Edge case: today is before all milestones
+if (insertAfter === -1) slots.unshift({ type: 'now' });
+
+// Evenly space all slots: first at LEFT_MARGIN%, last at RIGHT_MARGIN%
+const LEFT_MARGIN = 4;
+const RIGHT_MARGIN = 96;
+const n = slots.length;
+const step = (RIGHT_MARGIN - LEFT_MARGIN) / (n - 1);
+
+// Month label for today
+const todayLabel = today.toLocaleString('default', { month: 'long', year: 'numeric' });
+
+// YAH always renders up/tall (U2)
+const YAH_DIR  = 'up';
+const YAH_STEM = 76;
+
+// Build and inject HTML
+const track = document.querySelector('.track');
+// Remove any existing milestone elements (safety)
+track.querySelectorAll('.milestone').forEach(el => el.remove());
+
+slots.forEach((slot, i) => {
+  const pct = (LEFT_MARGIN + i * step).toFixed(2);
+  const el = document.createElement('div');
+
+  if (slot.type === 'now') {
+    // Determine YAH tier direction to avoid collision with neighbours
+    el.className = 'milestone now';
+    el.style.left = pct + '%';
+    el.innerHTML = `
+      <div class="yah-badge">YOU ARE HERE</div>
+      <div class="dot"></div>
+      <div class="stem ${YAH_DIR}" style="height:${YAH_STEM}px;"></div>
+      <div class="label ${YAH_DIR}" style="--stem:${YAH_STEM}px;">
+        <div class="label-date">${todayLabel}</div>
+        <div class="label-title">Today</div>
+      </div>`;
+  } else {
+    const m = slot.data;
+    el.className = `milestone ${m.cls}`;
+    el.style.left = pct + '%';
+    el.innerHTML = `
+      <div class="dot"></div>
+      <div class="stem ${m.dir}" style="height:${m.stem}px;"></div>
+      <div class="label ${m.dir}" style="--stem:${m.stem}px;">
+        <div class="label-date">${m.dateLabel}</div>
+        <div class="label-title">${m.title}</div>
+        ${m.sub ? `<div class="label-sub">${m.sub}</div>` : ''}
+      </div>`;
+  }
+
+  track.appendChild(el);
+});
+
+// Track fill ends at the YAH dot position
+const yahIndex = slots.findIndex(s => s.type === 'now');
+const yahPct = (LEFT_MARGIN + yahIndex * step).toFixed(2);
+document.querySelector('.track-fill').style.width = yahPct + '%';
+</script>
+</body>
+</html>
